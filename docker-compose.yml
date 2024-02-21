@@ -1,61 +1,81 @@
-version: "3.5"
+version: '3.4'
+
+networks:
+  rinha-backend:
 
 services:
-  api01:
-    build:
-      context: ./src/RinhaBackend2024
-      dockerfile: Dockerfile
-    image: fvck_ms1
-    hostname: api01
-    environment:
-      - APIPORT=80
-      - DB_HOSTNAME=Dev
-    depends_on:
-      - db
-    deploy:
-      resources:
-        limits:
-          cpus: "0.6"
-          memory: "200MB"
-
-  api02:
-    <<: *api 
-    hostname: fvck_ms2
-    environment:
-      - APIPORT=80
-      - DB_HOSTNAME=D
-  
-  nginx:
-    image: nginx:latest
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf:ro
-    depends_on:
-      - api01
-      - api02
+  rinhabackend2024Db:
+    container_name: rinha_backend_db
+    image: mcr.microsoft.com/mssql/server:2022-latest
     ports:
-      - "9999:9999" 
-    deploy:
-      resources:
-        limits:
-          cpus: "0.17"
-          memory: "10MB"
+      - 1433:1433
 
-  db:
-    image: mcr.microsoft.com/mssql/server:latest
-    hostname: db
     environment:
-      - ACCEPT_EULA=Y
-      - SA_PASSWORD=YourStrong!Passw0rd
-      - MSSQL_PID=Express
-    ports:
-      - "9999:9999"
+      ACCEPT_EULA: Y
+      MSSQL_SA_PASSWORD: 
+
+    networks:
+      - rinha-backend
+
     deploy:
       resources:
         limits:
           cpus: "0.13"
           memory: "140MB"
 
-networks:
-  default:
-    driver: bridge
-    name: rinha-nginx-2024q1
+  rinhabackend2024API1: &rinhabackend2024API
+    hostname: API1
+    container_name: rinha_backend_api_1
+    build:
+      context: .
+      dockerfile: src/RinhaBackend2024/Dockerfile
+
+    ports:
+      - 8080:80
+
+    depends_on:
+      - rinhabackend2024Db
+
+    networks:
+      - rinha-backend
+
+    environment:
+      DB_HOST: rinhabackend2024Db
+      DB_NAME: RINHABEND
+      DB_SA_PASSWORD: 
+
+    deploy:
+      resources:
+        limits:
+          cpus: "0.6"
+          memory: "200MB"
+
+  rinhabackend2024API2:
+    <<: *rinhabackend2024API
+    hostname: API2
+    container_name: rinha_backend_api_2
+    ports:
+      - 8081:80
+
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+
+    depends_on:
+      - rinhabackend2024API1
+      - rinhabackend2024API2
+
+    networks:
+      - rinha-backend
+
+    ports:
+      - "9999:9999"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.17"
+          memory: "10MB"
+
+
+
