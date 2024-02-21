@@ -1,5 +1,5 @@
-﻿using System.Text.Json.Serialization;
-using RinhaBackend2024.Models;
+﻿using RinhaBackend2024.Models;
+using System.Text.Json.Serialization;
 
 namespace RinhaBackend2024.DTO.Response;
 

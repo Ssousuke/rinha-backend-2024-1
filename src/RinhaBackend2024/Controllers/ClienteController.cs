@@ -22,11 +22,11 @@ public class ClienteController : ControllerBase
         if (cliente)
         {
             var transacao = await _repository.CriarTransacao(transacaoDto, id);
+
             if (transacao.Id != null)
                 return Ok(transacao);
             return UnprocessableEntity();
         }
-
         return NotFound();
     }
 
